@@ -9,6 +9,8 @@ import (
 	"google.golang.org/grpc"
 
 	user "github.com/KanhaGoLang/grpc_go/proto"
+	"github.com/KanhaGoLang/grpc_go/server/connection"
+	"github.com/KanhaGoLang/grpc_go/server/service"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -28,7 +30,7 @@ type userServer struct {
 func main() {
 
 	// Initialize database connection
-	db, err := sql.Open("mysql", "root:password@tcp(localhost:3306)/sanjeev")
+	db, err := connection.NewDatabaseConnection()
 	if err != nil {
 		fmt.Println("Error connecting to the database:", err)
 		return
@@ -70,7 +72,7 @@ func (u *userServer) ReadUserById(ctx context.Context, req *user.UserId) (*user.
 func (u *userServer) CreateUser(ctx context.Context, req *user.User) (*user.User, error) {
 	fmt.Println("Server create user")
 
-	createdUser, err := u.userService.CreateUser(ctx, req)
+	createdUser, err := service.CreateUser(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -78,26 +80,4 @@ func (u *userServer) CreateUser(ctx context.Context, req *user.User) (*user.User
 	fmt.Println(createdUser)
 
 	return createdUser, nil
-}
-
-func (s *UserService) CreateUser(ctx context.Context, user *user.User) (*user.User, error) {
-	fmt.Println("Service create user")
-
-	query := "INSERT INTO users (name, email, password, role, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
-
-	result, err := s.db.ExecContext(ctx, query, user.Name, user.Email, user.Password, user.Role, user.IsActive, user.CreatedAt, user.UpdatedAt)
-
-	if err != nil {
-		return nil, err
-	}
-
-	userId, err := result.LastInsertId()
-
-	if err != nil {
-		return nil, err
-	}
-	user.Id = int32(userId)
-
-	return user, nil
-
 }
