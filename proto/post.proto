@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package post;
+
+option go_package = "./proto";
+
+message Post {
+    int32 id= 1;
+    string title =2;
+    string desciption =3;
+    bool is_active =4;
+    string created_at= 5;
+    string updated_at = 6;
+}
+
+message PostId {
+    int32 id = 1;
+}
+
+message PostSuccess {
+    bool is_success  =1;
+}
+
+message Posts {
+    repeated Post post = 1;
+}
+
+message NoPostParameter  {
+
+}
+
+
+service PostService {
+    rpc Create(Post) returns (Post);
+    rpc ReadById(PostId) returns (Post);
+    rpc Update(Post) returns (Post);
+    rpc Delete(PostId) returns (PostSuccess);
+    rpc GetAll(NoPostParameter) returns (Posts);
+}
+ 
