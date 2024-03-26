@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"net"
 
@@ -14,16 +13,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-type UserService struct {
-	db *sql.DB
-}
-
-func NewUserService(db *sql.DB) *UserService {
-	return &UserService{db}
-}
-
 type userServer struct {
-	userService *UserService
+	userService *service.UserService
 	user.UnimplementedUserServiceServer
 }
 
@@ -38,7 +29,7 @@ func main() {
 	defer db.Close()
 
 	// Initialize UserService
-	userService := NewUserService(db)
+	userService := service.NewUserService(db)
 
 	listener, tcpErr := net.Listen("tcp", "localhost:50052")
 	if tcpErr != nil {
@@ -72,7 +63,7 @@ func (u *userServer) ReadUserById(ctx context.Context, req *user.UserId) (*user.
 func (u *userServer) CreateUser(ctx context.Context, req *user.User) (*user.User, error) {
 	fmt.Println("Server create user")
 
-	createdUser, err := service.CreateUser(ctx, req)
+	createdUser, err := u.userService.CreateUser(ctx, req)
 	if err != nil {
 		return nil, err
 	}
