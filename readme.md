@@ -1,4 +1,4 @@
-** Info **
+**_ Info _**
 https://www.youtube.com/watch?v=a6G5-LUlFO4&t=3228&ab_channel=AkhilSharma
 
 protoc --go_out=. --go-grpc_out=. proto/greet.proto
@@ -7,7 +7,7 @@ go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 
 go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
-** Create User **
+**_ Create User _**
 CREATE TABLE User (
 id INT AUTO_INCREMENT PRIMARY KEY,
 name VARCHAR(255) NOT NULL,
@@ -19,7 +19,7 @@ created_at DATETIME NOT NULL,
 updated_at DATETIME NOT NULL
 );
 
-** Dump Users **
+**_ Dump Users _**
 INSERT INTO User (name, email, password, role, is_active, created_at, updated_at) VALUES
 ('John Doe', 'john@example.com', 'password1', 'admin', true, '2024-03-26 09:00:00', '2024-03-26 09:00:00'),
 ('Jane Smith', 'jane@example.com', 'password2', 'user', true, '2024-03-26 10:00:00', '2024-03-26 10:00:00'),
