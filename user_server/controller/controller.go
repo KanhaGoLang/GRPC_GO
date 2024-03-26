@@ -47,5 +47,10 @@ func (uc *UserController) GetAllUsers(ctx context.Context, req *user.NoParameter
 	fmt.Println("UC get all users")
 
 	return uc.UserService.GetAllUsers(ctx, req)
-	// return nil, errors.New("function not implemented")
+}
+
+func (uc *UserController) DeleteUser(ctx context.Context, req *user.UserId) (*user.Success, error) {
+	fmt.Println("UC Delete user")
+
+	return uc.UserService.DeleteUser(ctx, req)
 }

@@ -110,3 +110,14 @@ func (us *UserService) GetAllUsers(ctx context.Context, req *user.NoParameter) (
 	return &user.Users{User: users}, nil
 
 }
+
+func (us *UserService) DeleteUser(ctx context.Context, req *user.UserId) (*user.Success, error) {
+	query := "DELETE FROM users WHERE id = ?"
+
+	_, err := us.db.ExecContext(ctx, query, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user.Success{IsSuccess: true}, nil
+}
