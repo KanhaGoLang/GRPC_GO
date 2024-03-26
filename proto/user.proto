@@ -11,6 +11,8 @@ message User {
     string password = 4;
     string role = 5;
     bool is_active =6;
+    string created_at= 7;
+    string updated_at = 8;
 }
 
 message UserId {
