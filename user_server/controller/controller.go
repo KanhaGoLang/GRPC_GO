@@ -49,7 +49,7 @@ func (uc *UserController) GetAllUsers(ctx context.Context, req *user.NoParameter
 	return uc.UserService.GetAllUsers(ctx, req)
 }
 
-func (uc *UserController) DeleteUser(ctx context.Context, req *user.UserId) (*user.Success, error) {
+func (uc *UserController) DeleteUser(ctx context.Context, req *user.UserId) (*user.UserSuccess, error) {
 	fmt.Println("UC Delete user")
 
 	return uc.UserService.DeleteUser(ctx, req)

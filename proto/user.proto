@@ -1,4 +1,7 @@
+// user.proto
+
 syntax = "proto3";
+
 
 package user;
 
@@ -19,7 +22,7 @@ message UserId {
     int32 id = 1;
 }
 
-message Success {
+message UserSuccess {
     bool is_success  =1;
 }
 
@@ -36,7 +39,7 @@ service UserService {
     rpc CreateUser(User) returns (User);
     rpc ReadUserById(UserId) returns (User);
     rpc UpdateUser(User) returns (User);
-    rpc DeleteUser(UserId) returns (Success);
+    rpc DeleteUser(UserId) returns (UserSuccess);
     rpc GetAllUsers(NoParameter) returns (Users);
 }
  
