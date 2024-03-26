@@ -13,11 +13,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-// type userServer struct {
-// 	userService *service.UserService
-// 	user.UnimplementedUserServiceServer
-// }
-
 func main() {
 
 	// Initialize database connection

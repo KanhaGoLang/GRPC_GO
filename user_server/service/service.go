@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	user "github.com/KanhaGoLang/grpc_go/proto"
 )
@@ -54,5 +55,58 @@ func (s *UserService) ReadUser(ctx context.Context, req *user.UserId) (*user.Use
 	}
 
 	return &user, nil
+
+}
+
+func (us *UserService) UpdateUser(ctx context.Context, req *user.User) (*user.User, error) {
+	fmt.Println("US Update user")
+
+	if req == nil || req.Id <= 0 {
+		return nil, fmt.Errorf("invalid payload")
+	}
+
+	// creating a type dynamically
+	var userId user.UserId
+	userId.Id = req.Id
+
+	// check if user exists in DB
+	_, err := us.ReadUser(ctx, &userId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req.UpdatedAt = time.Now().Format("2006-01-02 15:04:05")
+
+	query := "UPDATE users SET name = ?, email = ? , password = ?, updated_at = ? WHERE id = ?"
+
+	_, err = us.db.ExecContext(ctx, query, req.Name, req.Email, req.Password, req.UpdatedAt, req.Id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+func (us *UserService) GetAllUsers(ctx context.Context, req *user.NoParameter) (*user.Users, error) {
+	rows, err := us.db.QueryContext(ctx, "SELECT * FROM users")
+	if err != nil {
+		return nil, err
+	}
+
+	// var user user.User
+	users := []*user.User{}
+
+	for rows.Next() {
+		u := new(user.User)
+		err = rows.Scan(&u.Id, &u.Name, &u.Email, &u.Password, &u.Role, &u.IsActive, &u.CreatedAt, &u.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, u)
+	}
+
+	return &user.Users{User: users}, nil
 
 }
