@@ -20,6 +20,8 @@ func main() {
 	if err != nil {
 		fmt.Println("Error connecting to the database:", err)
 		return
+	} else {
+		fmt.Println("Connected to Database")
 	}
 	defer db.Close()
 
