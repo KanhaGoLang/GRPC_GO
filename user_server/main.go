@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"net"
+	"time"
 
 	"google.golang.org/grpc"
 
@@ -13,13 +16,44 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+const (
+	postServiceAddress = "localhost:50053" // Assuming PostService runs on localhost:50051
+)
+
 func main() {
+	// Set up a connection to the PostService server
+	postServiceConnection, err := grpc.Dial(postServiceAddress, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("Failed to dial: %v", err)
+	}
+	defer postServiceConnection.Close()
+
+	// Create a PostService client
+	postClient := user.NewPostServiceClient(postServiceConnection)
+	// create a new PostServiceClient
+	newPost := &user.Post{
+		Id:          125,
+		Title:       "This is a test title for the user service.",
+		Description: "Test Description",
+		IsActive:    true,
+		CreatedAt:   time.Now().String(),
+		UpdatedAt:   time.Now().String(),
+	}
+
+	createdPost, err := postClient.Create(context.Background(), newPost)
+	if err != nil {
+		log.Fatalf("Failed to create post: %v", err)
+	}
+
+	log.Printf("Created post: %v", createdPost)
 
 	// Initialize database connection
 	db, err := connection.NewDatabaseConnection()
 	if err != nil {
 		fmt.Println("Error connecting to the database:", err)
 		return
+	} else {
+		fmt.Println("Connected to Database")
 	}
 	defer db.Close()
 
