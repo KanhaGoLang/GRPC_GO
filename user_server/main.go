@@ -5,9 +5,9 @@ import (
 	"log"
 	"net"
 
+	"github.com/KanhaGoLang/go_common/common"
 	"google.golang.org/grpc"
 
-	"github.com/KanhaGoLang/grpc_go/common"
 	proto "github.com/KanhaGoLang/grpc_go/proto"
 	"github.com/KanhaGoLang/grpc_go/user_server/controller"
 	"github.com/KanhaGoLang/grpc_go/user_server/service"

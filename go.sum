@@ -1,5 +1,7 @@
 filippo.io/edwards25519 v1.1.0 h1:FNf4tywRC1HmFuKW5xopWpigGjJKiJSV0Cqo0cJWDaA=
 filippo.io/edwards25519 v1.1.0/go.mod h1:BxyFTGdWcka3PhytdK4V28tE5sGfRvvvRV7EaN4VDT4=
+github.com/KanhaGoLang/go_common v0.0.0-20240401123926-c42636016c6e h1:ymc8PSp9tYMutF6/Q/Oybwm7g79veQqPbd1eorDyS4s=
+github.com/KanhaGoLang/go_common v0.0.0-20240401123926-c42636016c6e/go.mod h1:C+IB6ZyIjnz76bu0ptDhwphrVmXDuiy2l50ex0pZYTc=
 github.com/go-sql-driver/mysql v1.8.0 h1:UtktXaU2Nb64z/pLiGIxY4431SJ4/dR5cjMmlVHgnT4=
 github.com/go-sql-driver/mysql v1.8.0/go.mod h1:wEBSXgmK//2ZFJyE+qWnIsVGmvmEKlqwuVSjsCm7DZg=
 github.com/golang/protobuf v1.5.0/go.mod h1:FsONVRAS9T7sI+LIUmWTfcYkHO4aIWwzhcaSAoJOfIk=

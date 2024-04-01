@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/KanhaGoLang/grpc_go/common"
+	"github.com/KanhaGoLang/go_common/common"
 	"github.com/KanhaGoLang/grpc_go/post_server/controller"
 	"github.com/KanhaGoLang/grpc_go/post_server/service"
 	post "github.com/KanhaGoLang/grpc_go/proto"
