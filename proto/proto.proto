@@ -1,12 +1,10 @@
-// user.proto
-
 syntax = "proto3";
 
-
-package user;
+package grpcService;
 
 option go_package = "./proto";
 
+// User Proto Start
 message User {
     int32 id= 1;
     string name =2;
@@ -34,7 +32,6 @@ message NoParameter  {
 
 }
 
-
 service UserService {
     rpc CreateUser(User) returns (User);
     rpc ReadUserById(UserId) returns (User);
@@ -42,4 +39,45 @@ service UserService {
     rpc DeleteUser(UserId) returns (UserSuccess);
     rpc GetAllUsers(NoParameter) returns (Users);
 }
+ 
+
+// User Proto End
+
+// Post Proto Start
+message Post {
+    int32 id= 1;
+    string title =2;
+    string description =3;
+    bool is_active =4;
+    string created_at= 5;
+    string updated_at = 6;
+}
+
+message PostId {
+    int32 id = 1;
+}
+
+message PostSuccess {
+    bool is_success  =1;
+}
+
+message Posts {
+    repeated Post post = 1;
+}
+
+message NoPostParameter  {
+
+}
+
+
+service PostService {
+    rpc Create(Post) returns (Post);
+    rpc ReadById(PostId) returns (Post);
+    rpc Update(Post) returns (Post);
+    rpc Delete(PostId) returns (PostSuccess);
+    rpc GetAll(NoPostParameter) returns (Posts);
+}
+
+// Post Proto end
+
  
