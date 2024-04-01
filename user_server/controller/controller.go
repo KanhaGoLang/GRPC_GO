@@ -4,16 +4,17 @@ import (
 	"context"
 	"fmt"
 
-	user "github.com/KanhaGoLang/grpc_go/proto"
+	proto "github.com/KanhaGoLang/grpc_go/proto"
 	"github.com/KanhaGoLang/grpc_go/user_server/service"
 )
 
 type UserController struct {
 	UserService *service.UserService
-	user.UnimplementedUserServiceServer
+	proto.UnimplementedUserServiceServer
+	PostServiceClient proto.PostServiceClient
 }
 
-func (uc *UserController) ReadUserById(ctx context.Context, req *user.UserId) (*user.User, error) {
+func (uc *UserController) ReadUserById(ctx context.Context, req *proto.UserId) (*proto.User, error) {
 	fmt.Println("Server ReadUserById")
 
 	dbUser, err := uc.UserService.ReadUser(ctx, req)
@@ -24,7 +25,7 @@ func (uc *UserController) ReadUserById(ctx context.Context, req *user.UserId) (*
 	return dbUser, nil
 }
 
-func (uc *UserController) CreateUser(ctx context.Context, req *user.User) (*user.User, error) {
+func (uc *UserController) CreateUser(ctx context.Context, req *proto.User) (*proto.User, error) {
 	fmt.Println("Server create user")
 
 	createdUser, err := uc.UserService.CreateUser(ctx, req)
@@ -37,19 +38,19 @@ func (uc *UserController) CreateUser(ctx context.Context, req *user.User) (*user
 	return createdUser, nil
 }
 
-func (uc *UserController) UpdateUser(ctx context.Context, req *user.User) (*user.User, error) {
+func (uc *UserController) UpdateUser(ctx context.Context, req *proto.User) (*proto.User, error) {
 	fmt.Println("UC update user")
 
 	return uc.UserService.UpdateUser(ctx, req)
 }
 
-func (uc *UserController) GetAllUsers(ctx context.Context, req *user.NoParameter) (*user.Users, error) {
+func (uc *UserController) GetAllUsers(ctx context.Context, req *proto.NoParameter) (*proto.Users, error) {
 	fmt.Println("UC get all users")
 
 	return uc.UserService.GetAllUsers(ctx, req)
 }
 
-func (uc *UserController) DeleteUser(ctx context.Context, req *user.UserId) (*user.UserSuccess, error) {
+func (uc *UserController) DeleteUser(ctx context.Context, req *proto.UserId) (*proto.UserSuccess, error) {
 	fmt.Println("UC Delete user")
 
 	return uc.UserService.DeleteUser(ctx, req)

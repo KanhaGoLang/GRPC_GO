@@ -1,16 +1,14 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net"
-	"time"
 
 	"google.golang.org/grpc"
 
-	user "github.com/KanhaGoLang/grpc_go/proto"
-	"github.com/KanhaGoLang/grpc_go/user_server/connection"
+	"github.com/KanhaGoLang/grpc_go/common"
+	proto "github.com/KanhaGoLang/grpc_go/proto"
 	"github.com/KanhaGoLang/grpc_go/user_server/controller"
 	"github.com/KanhaGoLang/grpc_go/user_server/service"
 	_ "github.com/go-sql-driver/mysql"
@@ -29,26 +27,10 @@ func main() {
 	defer postServiceConnection.Close()
 
 	// Create a PostService client
-	postClient := user.NewPostServiceClient(postServiceConnection)
-	// create a new PostServiceClient
-	newPost := &user.Post{
-		Id:          125,
-		Title:       "This is a test title for the user service.",
-		Description: "Test Description",
-		IsActive:    true,
-		CreatedAt:   time.Now().String(),
-		UpdatedAt:   time.Now().String(),
-	}
-
-	createdPost, err := postClient.Create(context.Background(), newPost)
-	if err != nil {
-		log.Fatalf("Failed to create post: %v", err)
-	}
-
-	log.Printf("Created post: %v", createdPost)
+	postClient := proto.NewPostServiceClient(postServiceConnection)
 
 	// Initialize database connection
-	db, err := connection.NewDatabaseConnection()
+	db, err := common.NewDatabaseConnection()
 	if err != nil {
 		fmt.Println("Error connecting to the database:", err)
 		return
@@ -66,7 +48,7 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
-	user.RegisterUserServiceServer(grpcServer, &controller.UserController{UserService: userService})
+	proto.RegisterUserServiceServer(grpcServer, &controller.UserController{UserService: userService, PostServiceClient: postClient})
 
 	fmt.Println("Server started")
 

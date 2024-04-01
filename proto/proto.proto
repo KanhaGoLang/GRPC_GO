@@ -38,6 +38,7 @@ service UserService {
     rpc UpdateUser(User) returns (User);
     rpc DeleteUser(UserId) returns (UserSuccess);
     rpc GetAllUsers(NoParameter) returns (Users);
+    rpc GetUserPosts(UserId) returns (Posts);
 }
  
 
@@ -49,8 +50,9 @@ message Post {
     string title =2;
     string description =3;
     bool is_active =4;
-    string created_at= 5;
-    string updated_at = 6;
+    string user_id= 5;
+    string created_at= 6;
+    string updated_at = 7;
 }
 
 message PostId {
