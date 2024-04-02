@@ -46,3 +46,71 @@ func (ps *PostService) GetAll(ctx context.Context, req *proto.NoPostParameter) (
 
 	return &proto.Posts{Post: posts}, nil
 }
+
+func (ps *PostService) ReadById(ctx context.Context, req *proto.PostId) (*proto.Post, error) {
+	log.Println("PS get POST by ID")
+	query := "SELECT * FROM posts where id = ?"
+	row := ps.db.QueryRowContext(ctx, query, req.Id)
+
+	post := new(proto.Post)
+	err := row.Scan(&post.Id, &post.Title, &post.Description, &post.IsActive, &post.UserId, &post.CreatedAt, &post.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	return post, nil
+}
+
+func (ps *PostService) Delete(ctx context.Context, req *proto.PostId) (*proto.PostSuccess, error) {
+	query := "DELETE FROM posts WHERE id = ?"
+	_, err := ps.db.ExecContext(ctx, query, req.Id)
+
+	if err != nil {
+		return &proto.PostSuccess{IsSuccess: false}, err
+	}
+
+	return &proto.PostSuccess{IsSuccess: true}, nil
+}
+
+func (ps *PostService) Create(ctx context.Context, req *proto.Post) (*proto.Post, error) {
+	log.Println("PS create POST")
+
+	query := "INSERT INTO posts (title, description, is_active, user_id) VALUES (? , ?, ?, ?)"
+
+	result, err := ps.db.ExecContext(ctx, query, req.Title, req.Description, req.IsActive, req.UserId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	newPosTtId, err := result.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+
+	return ps.ReadById(ctx, &proto.PostId{Id: int32(newPosTtId)})
+}
+
+func (ps *PostService) Update(ctx context.Context, req *proto.Post) (*proto.Post, error) {
+	log.Println("PS UPDATE POST")
+
+	dbPost, err := ps.ReadById(ctx, &proto.PostId{Id: req.Id})
+
+	if err != nil {
+		return nil, err
+	}
+
+	query := "UPDATE posts set title = ?, description = ?, is_active = ?, user_id = ?"
+
+	_, err = ps.db.ExecContext(ctx, query, req.Title, req.Description, req.IsActive, req.UserId)
+	if err != nil {
+		return nil, err
+	}
+
+	dbPost.Title = req.Title
+	dbPost.Description = req.Description
+	dbPost.IsActive = req.IsActive
+	dbPost.UserId = req.UserId
+
+	return dbPost, err
+}
