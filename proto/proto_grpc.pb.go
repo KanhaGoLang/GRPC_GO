@@ -19,12 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	UserService_CreateUser_FullMethodName   = "/grpcService.UserService/CreateUser"
-	UserService_ReadUserById_FullMethodName = "/grpcService.UserService/ReadUserById"
-	UserService_UpdateUser_FullMethodName   = "/grpcService.UserService/UpdateUser"
-	UserService_DeleteUser_FullMethodName   = "/grpcService.UserService/DeleteUser"
-	UserService_GetAllUsers_FullMethodName  = "/grpcService.UserService/GetAllUsers"
-	UserService_GetUserPosts_FullMethodName = "/grpcService.UserService/GetUserPosts"
+	UserService_CreateUser_FullMethodName        = "/grpcService.UserService/CreateUser"
+	UserService_ReadUserById_FullMethodName      = "/grpcService.UserService/ReadUserById"
+	UserService_UpdateUser_FullMethodName        = "/grpcService.UserService/UpdateUser"
+	UserService_DeleteUser_FullMethodName        = "/grpcService.UserService/DeleteUser"
+	UserService_GetAllUsers_FullMethodName       = "/grpcService.UserService/GetAllUsers"
+	UserService_GetUserPosts_FullMethodName      = "/grpcService.UserService/GetUserPosts"
+	UserService_SaveMultipleUsers_FullMethodName = "/grpcService.UserService/SaveMultipleUsers"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -37,6 +38,8 @@ type UserServiceClient interface {
 	DeleteUser(ctx context.Context, in *UserId, opts ...grpc.CallOption) (*UserSuccess, error)
 	GetAllUsers(ctx context.Context, in *NoParameter, opts ...grpc.CallOption) (*Users, error)
 	GetUserPosts(ctx context.Context, in *UserId, opts ...grpc.CallOption) (*Posts, error)
+	// New client streaming RPC for saving multiple users
+	SaveMultipleUsers(ctx context.Context, opts ...grpc.CallOption) (UserService_SaveMultipleUsersClient, error)
 }
 
 type userServiceClient struct {
@@ -101,6 +104,40 @@ func (c *userServiceClient) GetUserPosts(ctx context.Context, in *UserId, opts .
 	return out, nil
 }
 
+func (c *userServiceClient) SaveMultipleUsers(ctx context.Context, opts ...grpc.CallOption) (UserService_SaveMultipleUsersClient, error) {
+	stream, err := c.cc.NewStream(ctx, &UserService_ServiceDesc.Streams[0], UserService_SaveMultipleUsers_FullMethodName, opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &userServiceSaveMultipleUsersClient{stream}
+	return x, nil
+}
+
+type UserService_SaveMultipleUsersClient interface {
+	Send(*User) error
+	CloseAndRecv() (*UserSuccess, error)
+	grpc.ClientStream
+}
+
+type userServiceSaveMultipleUsersClient struct {
+	grpc.ClientStream
+}
+
+func (x *userServiceSaveMultipleUsersClient) Send(m *User) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *userServiceSaveMultipleUsersClient) CloseAndRecv() (*UserSuccess, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(UserSuccess)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
@@ -111,6 +148,8 @@ type UserServiceServer interface {
 	DeleteUser(context.Context, *UserId) (*UserSuccess, error)
 	GetAllUsers(context.Context, *NoParameter) (*Users, error)
 	GetUserPosts(context.Context, *UserId) (*Posts, error)
+	// New client streaming RPC for saving multiple users
+	SaveMultipleUsers(UserService_SaveMultipleUsersServer) error
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -135,6 +174,9 @@ func (UnimplementedUserServiceServer) GetAllUsers(context.Context, *NoParameter)
 }
 func (UnimplementedUserServiceServer) GetUserPosts(context.Context, *UserId) (*Posts, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserPosts not implemented")
+}
+func (UnimplementedUserServiceServer) SaveMultipleUsers(UserService_SaveMultipleUsersServer) error {
+	return status.Errorf(codes.Unimplemented, "method SaveMultipleUsers not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 
@@ -257,6 +299,32 @@ func _UserService_GetUserPosts_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_SaveMultipleUsers_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(UserServiceServer).SaveMultipleUsers(&userServiceSaveMultipleUsersServer{stream})
+}
+
+type UserService_SaveMultipleUsersServer interface {
+	SendAndClose(*UserSuccess) error
+	Recv() (*User, error)
+	grpc.ServerStream
+}
+
+type userServiceSaveMultipleUsersServer struct {
+	grpc.ServerStream
+}
+
+func (x *userServiceSaveMultipleUsersServer) SendAndClose(m *UserSuccess) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *userServiceSaveMultipleUsersServer) Recv() (*User, error) {
+	m := new(User)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -289,7 +357,13 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UserService_GetUserPosts_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "SaveMultipleUsers",
+			Handler:       _UserService_SaveMultipleUsers_Handler,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "proto/proto.proto",
 }
 

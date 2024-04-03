@@ -3,6 +3,9 @@ package controller
 import (
 	"context"
 	"fmt"
+	"log"
+
+	"io"
 
 	proto "github.com/KanhaGoLang/grpc_go/proto"
 	"github.com/KanhaGoLang/grpc_go/user_server/service"
@@ -54,4 +57,27 @@ func (uc *UserController) DeleteUser(ctx context.Context, req *proto.UserId) (*p
 	fmt.Println("UC Delete user")
 
 	return uc.UserService.DeleteUser(ctx, req)
+}
+
+func (uc *UserController) SaveMultipleUsers(stream proto.UserService_SaveMultipleUsersServer) error {
+
+	var users []*proto.User
+	for {
+		user, err := stream.Recv()
+		if err != nil {
+			// If the stream has ended
+			if err == io.EOF {
+				// Save all users
+				// For demonstration, you can print received users
+				fmt.Println(users)
+				// Return success response
+				return stream.SendAndClose(&proto.UserSuccess{IsSuccess: true})
+				// return stream.SendAndClose(&proto.UserSuccess{IsSuccess: true})
+			}
+			return err
+		}
+		// Append user to the slice
+		users = append(users, user)
+		log.Println(users)
+	}
 }

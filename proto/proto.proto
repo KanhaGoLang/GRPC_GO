@@ -39,6 +39,9 @@ service UserService {
     rpc DeleteUser(UserId) returns (UserSuccess);
     rpc GetAllUsers(NoParameter) returns (Users);
     rpc GetUserPosts(UserId) returns (Posts);
+
+    // New client streaming RPC for saving multiple users
+    rpc SaveMultipleUsers(stream User) returns (UserSuccess);
 }
  
 
