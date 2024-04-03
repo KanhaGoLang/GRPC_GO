@@ -76,7 +76,7 @@ func (us *UserService) UpdateUser(ctx context.Context, req *proto.User) (*proto.
 		return nil, err
 	}
 
-	req.UpdatedAt = time.Now().Format("2006-01-02 15:04:05")
+	req.UpdatedAt = time.Now().Format(time.DateTime)
 
 	query := "UPDATE users SET name = ?, email = ? , password = ?, updated_at = ? WHERE id = ?"
 
