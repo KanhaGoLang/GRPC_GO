@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	user "github.com/KanhaGoLang/grpc_go/proto"
+	proto "github.com/KanhaGoLang/grpc_go/proto"
 )
 
 type UserService struct {
@@ -17,7 +17,7 @@ func NewUserService(db *sql.DB) *UserService {
 	return &UserService{db: db}
 }
 
-func (s *UserService) CreateUser(ctx context.Context, user *user.User) (*user.User, error) {
+func (s *UserService) CreateUser(ctx context.Context, user *proto.User) (*proto.User, error) {
 	fmt.Println("Service create user")
 
 	query := "INSERT INTO users (name, email, password, role, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
@@ -36,7 +36,7 @@ func (s *UserService) CreateUser(ctx context.Context, user *user.User) (*user.Us
 	return user, nil
 }
 
-func (s *UserService) ReadUser(ctx context.Context, req *user.UserId) (*user.User, error) {
+func (s *UserService) ReadUser(ctx context.Context, req *proto.UserId) (*proto.User, error) {
 	if req == nil || req.Id < 0 {
 		return nil, fmt.Errorf("invalid id %v", req.Id)
 	}
@@ -45,7 +45,7 @@ func (s *UserService) ReadUser(ctx context.Context, req *user.UserId) (*user.Use
 
 	row := s.db.QueryRow(query, req.Id)
 
-	var user user.User
+	var user proto.User
 
 	// scan the row in the user struct
 
@@ -58,7 +58,7 @@ func (s *UserService) ReadUser(ctx context.Context, req *user.UserId) (*user.Use
 
 }
 
-func (us *UserService) UpdateUser(ctx context.Context, req *user.User) (*user.User, error) {
+func (us *UserService) UpdateUser(ctx context.Context, req *proto.User) (*proto.User, error) {
 	fmt.Println("US Update user")
 
 	if req == nil || req.Id <= 0 {
@@ -66,7 +66,7 @@ func (us *UserService) UpdateUser(ctx context.Context, req *user.User) (*user.Us
 	}
 
 	// creating a type dynamically
-	var userId user.UserId
+	var userId proto.UserId
 	userId.Id = req.Id
 
 	// check if user exists in DB
@@ -76,7 +76,7 @@ func (us *UserService) UpdateUser(ctx context.Context, req *user.User) (*user.Us
 		return nil, err
 	}
 
-	req.UpdatedAt = time.Now().Format("2006-01-02 15:04:05")
+	req.UpdatedAt = time.Now().Format(time.DateTime)
 
 	query := "UPDATE users SET name = ?, email = ? , password = ?, updated_at = ? WHERE id = ?"
 
@@ -89,17 +89,17 @@ func (us *UserService) UpdateUser(ctx context.Context, req *user.User) (*user.Us
 	return req, nil
 }
 
-func (us *UserService) GetAllUsers(ctx context.Context, req *user.NoParameter) (*user.Users, error) {
+func (us *UserService) GetAllUsers(ctx context.Context, req *proto.NoParameter) (*proto.Users, error) {
 	rows, err := us.db.QueryContext(ctx, "SELECT * FROM users")
 	if err != nil {
 		return nil, err
 	}
 
 	// var user user.User
-	users := []*user.User{}
+	users := []*proto.User{}
 
 	for rows.Next() {
-		u := new(user.User)
+		u := new(proto.User)
 		err = rows.Scan(&u.Id, &u.Name, &u.Email, &u.Password, &u.Role, &u.IsActive, &u.CreatedAt, &u.UpdatedAt)
 		if err != nil {
 			return nil, err
@@ -107,11 +107,11 @@ func (us *UserService) GetAllUsers(ctx context.Context, req *user.NoParameter) (
 		users = append(users, u)
 	}
 
-	return &user.Users{User: users}, nil
+	return &proto.Users{User: users}, nil
 
 }
 
-func (us *UserService) DeleteUser(ctx context.Context, req *user.UserId) (*user.UserSuccess, error) {
+func (us *UserService) DeleteUser(ctx context.Context, req *proto.UserId) (*proto.UserSuccess, error) {
 	query := "DELETE FROM users WHERE id = ?"
 
 	_, err := us.db.ExecContext(ctx, query, req.Id)
@@ -119,5 +119,5 @@ func (us *UserService) DeleteUser(ctx context.Context, req *user.UserId) (*user.
 		return nil, err
 	}
 
-	return &user.UserSuccess{IsSuccess: true}, nil
+	return &proto.UserSuccess{IsSuccess: true}, nil
 }

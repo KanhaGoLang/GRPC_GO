@@ -2,20 +2,36 @@ package controller
 
 import (
 	"context"
-	"fmt"
+	"log"
 
-	post "github.com/KanhaGoLang/grpc_go/proto"
+	"github.com/KanhaGoLang/grpc_go/post_server/service"
+	proto "github.com/KanhaGoLang/grpc_go/proto"
 )
 
 type PostController struct {
-	post.UnimplementedPostServiceServer
+	PostService *service.PostService
+	proto.UnimplementedPostServiceServer
 }
 
-func (pc *PostController) Create(ctx context.Context, req *post.Post) (*post.Post, error) {
-	fmt.Println("PC create func")
-	fmt.Printf("%v\n", req)
+func (pc *PostController) GetAll(ctx context.Context, req *proto.NoPostParameter) (*proto.Posts, error) {
+	log.Println("PC get all posts")
 
-	return &post.Post{Id: 1, Title: "Test", Description: "This is a test post", IsActive: true}, nil
+	return pc.PostService.GetAll(ctx, req)
+}
 
-	// return nil, fmt.Errorf("not implemented sanjeev")
+func (pc *PostController) ReadById(ctx context.Context, req *proto.PostId) (*proto.Post, error) {
+	return pc.PostService.ReadById(ctx, req)
+}
+
+func (pc *PostController) Delete(ctx context.Context, req *proto.PostId) (*proto.PostSuccess, error) {
+	return pc.PostService.Delete(ctx, req)
+
+}
+
+func (pc *PostController) Create(ctx context.Context, req *proto.Post) (*proto.Post, error) {
+	return pc.PostService.Create(ctx, req)
+}
+
+func (pc *PostController) Update(ctx context.Context, req *proto.Post) (*proto.Post, error) {
+	return pc.PostService.Update(ctx, req)
 }

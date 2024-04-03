@@ -3,6 +3,7 @@ module github.com/KanhaGoLang/grpc_go
 go 1.20
 
 require (
+	github.com/KanhaGoLang/go_common v0.0.0-20240401123926-c42636016c6e
 	github.com/go-sql-driver/mysql v1.8.0
 	google.golang.org/grpc v1.62.1
 	google.golang.org/protobuf v1.33.0

@@ -2,8 +2,9 @@
 
 https://www.youtube.com/watch?v=a6G5-LUlFO4&t=3228&ab_channel=AkhilSharma
 
-protoc --go_out=. --go-grpc_out=. proto/greet.proto
+protoc --go_out=. --go-grpc_out=. proto/proto.proto
 protoc --go_out=. --go-grpc_out=. proto/user.proto
+protoc --go_out=. --go-grpc_out=. proto/post.proto
 protoc --go_out=. --go-grpc_out=. proto/post.proto
 
 go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
@@ -46,3 +47,38 @@ INSERT INTO User (name, email, password, role, is_active, created_at, updated_at
 ('Noah Adams', 'noah@example.com', 'password18', 'user', true, '2024-03-27 02:00:00', '2024-03-27 02:00:00'),
 ('Mia Baker', 'mia@example.com', 'password19', 'user', true, '2024-03-27 03:00:00', '2024-03-27 03:00:00'),
 ('James Cook', 'james@example.com', 'password20', 'user', true, '2024-03-27 04:00:00', '2024-03-27 04:00:00');
+
+**_ Create Post Table _**
+CREATE TABLE posts (
+id INT AUTO_INCREMENT PRIMARY KEY,
+title VARCHAR(255),
+description TEXT,
+is_active BOOLEAN,
+user_id INT,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+INSERT INTO posts (title, description, is_active, user_id, created_at, updated_at)
+VALUES
+('Title 1', 'Description 1', 1, 22, NOW(), NOW()),
+('Title 2', 'Description 2', 0, 23, NOW(), NOW()),
+('Title 3', 'Description 3', 1, 24, NOW(), NOW()),
+('Title 4', 'Description 4', 0, 25, NOW(), NOW()),
+('Title 5', 'Description 5', 1, 22, NOW(), NOW()),
+('Title 6', 'Description 6', 0, 23, NOW(), NOW()),
+('Title 7', 'Description 7', 1, 24, NOW(), NOW()),
+('Title 8', 'Description 8', 0, 25, NOW(), NOW()),
+('Title 9', 'Description 9', 1, 22, NOW(), NOW()),
+('Title 10', 'Description 10', 0, 23, NOW(), NOW()),
+('Title 11', 'Description 11', 1, 24, NOW(), NOW()),
+('Title 12', 'Description 12', 0, 25, NOW(), NOW()),
+('Title 13', 'Description 13', 1, 22, NOW(), NOW()),
+('Title 14', 'Description 14', 0, 23, NOW(), NOW()),
+('Title 15', 'Description 15', 1, 24, NOW(), NOW()),
+('Title 16', 'Description 16', 0, 25, NOW(), NOW()),
+('Title 17', 'Description 17', 1, 22, NOW(), NOW()),
+('Title 18', 'Description 18', 0, 23, NOW(), NOW()),
+('Title 19', 'Description 19', 1, 24, NOW(), NOW()),
+('Title 20', 'Description 20', 0, 25, NOW(), NOW());
