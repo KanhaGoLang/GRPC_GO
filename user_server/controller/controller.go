@@ -7,8 +7,10 @@ import (
 
 	"io"
 
+	"github.com/KanhaGoLang/go_common/common"
 	proto "github.com/KanhaGoLang/grpc_go/proto"
 	"github.com/KanhaGoLang/grpc_go/user_server/service"
+	"github.com/fatih/color"
 )
 
 type UserController struct {
@@ -18,7 +20,8 @@ type UserController struct {
 }
 
 func (uc *UserController) ReadUserById(ctx context.Context, req *proto.UserId) (*proto.User, error) {
-	fmt.Println("Server ReadUserById")
+	log.Println("SSSSSSSSSSSSSSSSSSS")
+	common.MyLogger.Println(color.YellowString("UC--GRPC get user by ID"))
 
 	dbUser, err := uc.UserService.ReadUser(ctx, req)
 	if err != nil {

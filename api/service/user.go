@@ -11,7 +11,7 @@ import (
 // UserService defines methods for interacting with the gRPC user service
 type UserService interface {
 	GetUsers() (*proto.Users, error)
-	// Define other methods as needed
+	GetUser(id int32) (*proto.User, error)
 }
 
 type userGrpcServiceClient struct {
@@ -23,11 +23,19 @@ func NewUserServiceClient(grpcConn *grpc.ClientConn) UserService {
 	return &userGrpcServiceClient{grpcClient: proto.NewUserServiceClient(grpcConn)}
 }
 
-func (uc *userGrpcServiceClient) GetUsers() (*proto.Users, error) {
-	users, err := uc.grpcClient.GetAllUsers(context.Background(), &proto.NoParameter{})
+func (us *userGrpcServiceClient) GetUsers() (*proto.Users, error) {
+	users, err := us.grpcClient.GetAllUsers(context.Background(), &proto.NoParameter{})
 	if err != nil {
 		return nil, errors.New("unable to get user")
 	}
 	return users, nil
 
+}
+
+func (us *userGrpcServiceClient) GetUser(id int32) (*proto.User, error) {
+	user, err := us.grpcClient.ReadUserById(context.Background(), &proto.UserId{Id: id})
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }

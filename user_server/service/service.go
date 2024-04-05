@@ -4,9 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
 
 	proto "github.com/KanhaGoLang/grpc_go/proto"
+	"github.com/fatih/color"
 )
 
 type UserService struct {
@@ -15,6 +17,12 @@ type UserService struct {
 
 func NewUserService(db *sql.DB) *UserService {
 	return &UserService{db: db}
+}
+
+func myLogger() *log.Logger {
+	logger := log.New(color.Output, "", 0)
+
+	return logger
 }
 
 func (s *UserService) CreateUser(ctx context.Context, user *proto.User) (*proto.User, error) {
@@ -37,6 +45,8 @@ func (s *UserService) CreateUser(ctx context.Context, user *proto.User) (*proto.
 }
 
 func (s *UserService) ReadUser(ctx context.Context, req *proto.UserId) (*proto.User, error) {
+	myLogger().Println(color.GreenString("USER-SERVICE get user by Id"))
+
 	if req == nil || req.Id < 0 {
 		return nil, fmt.Errorf("invalid id %v", req.Id)
 	}
@@ -51,6 +61,7 @@ func (s *UserService) ReadUser(ctx context.Context, req *proto.UserId) (*proto.U
 
 	err := row.Scan(&user.Id, &user.Name, &user.Email, &user.Password, &user.Role, &user.IsActive, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
+		myLogger().Println(color.RedString("error reading from database : %s", err))
 		return nil, err
 	}
 
@@ -90,6 +101,8 @@ func (us *UserService) UpdateUser(ctx context.Context, req *proto.User) (*proto.
 }
 
 func (us *UserService) GetAllUsers(ctx context.Context, req *proto.NoParameter) (*proto.Users, error) {
+	log.Println("USER Service Get All Users")
+
 	rows, err := us.db.QueryContext(ctx, "SELECT * FROM users")
 	if err != nil {
 		return nil, err
