@@ -7,7 +7,6 @@ require (
 	github.com/fatih/color v1.16.0
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/gorilla/mux v1.8.1
-	github.com/labstack/gommon v0.4.2
 	google.golang.org/grpc v1.63.0
 	google.golang.org/protobuf v1.33.0
 )
