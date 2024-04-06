@@ -3,8 +3,9 @@ module github.com/KanhaGoLang/grpc_go
 go 1.20
 
 require (
-	github.com/KanhaGoLang/go_common v1.0.1
+	github.com/KanhaGoLang/go_common v1.0.3
 	github.com/fatih/color v1.16.0
+	github.com/go-playground/validator/v10 v10.19.0
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/gorilla/mux v1.8.1
 	google.golang.org/grpc v1.63.0
@@ -16,7 +17,6 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.19.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
