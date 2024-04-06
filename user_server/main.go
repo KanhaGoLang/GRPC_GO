@@ -14,17 +14,12 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-const (
-	userServiceAddress = "localhost:50052" // Assuming PostService runs on localhost:50051
-	postServiceAddress = "localhost:50053" // Assuming PostService runs on localhost:50051
-)
-
 func main() {
 	common.MyLogger.Println(color.CyanString("UserServer is starting..."))
-	common.MyLogger.Println(color.HiMagentaString("Connecting to PostGRPC Service on port %s", postServiceAddress))
+	common.MyLogger.Println(color.HiMagentaString("Connecting to PostGRPC Service on port %s", common.PostServiceAddress))
 
 	// Set up a connection to the PostService server
-	postServiceConnection, err := grpc.Dial(postServiceAddress, grpc.WithInsecure())
+	postServiceConnection, err := grpc.Dial(common.PostServiceAddress, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("Failed to dial: %v", err)
 	}
@@ -47,7 +42,7 @@ func main() {
 	// Initialize UserService
 	userService := service.NewUserService(db)
 
-	listener, tcpErr := net.Listen("tcp", userServiceAddress)
+	listener, tcpErr := net.Listen("tcp", common.UserServiceAddress)
 	if tcpErr != nil {
 		panic(tcpErr)
 	}
@@ -55,7 +50,7 @@ func main() {
 	grpcServer := grpc.NewServer()
 	proto.RegisterUserServiceServer(grpcServer, &controller.UserController{UserService: userService, PostServiceClient: postClient})
 
-	common.MyLogger.Println(color.BlueString("UserServer started on port %s", userServiceAddress))
+	common.MyLogger.Println(color.BlueString("UserServer started on port %s", common.UserServiceAddress))
 
 	if e := grpcServer.Serve(listener); e != nil {
 		panic(e)

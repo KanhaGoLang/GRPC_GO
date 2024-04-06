@@ -13,10 +13,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-const (
-	postGrpcServiceAddress = "localhost:50053"
-)
-
 func main() {
 
 	// Initialize database connection
@@ -29,7 +25,7 @@ func main() {
 	}
 	defer db.Close()
 
-	listener, tcpErr := net.Listen("tcp", postGrpcServiceAddress)
+	listener, tcpErr := net.Listen("tcp", common.PostServiceAddress)
 
 	if tcpErr != nil {
 		panic(tcpErr)
@@ -42,7 +38,7 @@ func main() {
 
 	post.RegisterPostServiceServer(grpcServer, &controller.PostController{PostService: postService})
 
-	common.MyLogger.Println(color.GreenString("POST GRPC Service running on %s", postGrpcServiceAddress))
+	common.MyLogger.Println(color.GreenString("POST GRPC Service running on %s", common.PostServiceAddress))
 
 	if e := grpcServer.Serve(listener); e != nil {
 		panic(e)

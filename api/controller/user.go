@@ -73,6 +73,33 @@ func (uc *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	handleUserRequest(w, r, uc.userService.UpdateUser, "Update User")
 }
 
+func (uc *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+
+	// Convert the "id" parameter to an integer
+	id, err := strconv.ParseInt(idStr, 10, 32)
+	if err != nil || id <= 0 {
+		http.Error(w, "Invalid User id", http.StatusBadRequest)
+	}
+
+	idInt32 := int32(id)
+	common.MyLogger.Println(color.YellowString("UC Delete User having id %d", idInt32))
+
+	result, err := uc.userService.Delete((idInt32))
+
+	if err != nil {
+		common.MyLogger.Println(color.RedString(err.Error()))
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+
+}
+
 func handleUserRequest(w http.ResponseWriter, r *http.Request, userFunc func(*proto.User) (*proto.User, error), operation string) {
 	common.MyLogger.Println(color.YellowString("UC %s", operation))
 

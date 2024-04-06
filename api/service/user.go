@@ -15,6 +15,7 @@ type UserService interface {
 	GetUser(id int32) (*proto.User, error)
 	CreateUser(user *proto.User) (*proto.User, error)
 	UpdateUser(user *proto.User) (*proto.User, error)
+	Delete(id int32) (*proto.UserSuccess, error)
 }
 
 type userGrpcServiceClient struct {
@@ -62,6 +63,17 @@ func (us *userGrpcServiceClient) UpdateUser(user *proto.User) (*proto.User, erro
 	common.MyLogger.Println(color.MagentaString("USER-SERVICE update User %v", user))
 
 	updatedUser, err := us.grpcClient.UpdateUser(context.Background(), &proto.User{Id: user.Id, Name: user.Name, Email: user.Email, Password: user.Password, Role: user.Role, IsActive: user.IsActive})
+
+	if err != nil {
+		return nil, err
+	}
+	return updatedUser, nil
+}
+
+func (us *userGrpcServiceClient) Delete(id int32) (*proto.UserSuccess, error) {
+	common.MyLogger.Println(color.MagentaString("USER-SERVICE delete User %v", id))
+
+	updatedUser, err := us.grpcClient.DeleteUser(context.Background(), &proto.UserId{Id: id})
 
 	if err != nil {
 		return nil, err
