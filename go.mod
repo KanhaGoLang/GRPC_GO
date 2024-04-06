@@ -3,7 +3,7 @@ module github.com/KanhaGoLang/grpc_go
 go 1.20
 
 require (
-	github.com/KanhaGoLang/go_common v0.0.0-20240405165549-ddb37d09febc
+	github.com/KanhaGoLang/go_common v1.0.1
 	github.com/fatih/color v1.16.0
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/gorilla/mux v1.8.1
