@@ -3,7 +3,6 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -75,64 +74,76 @@ func (uc *UserController) GetUserById(w http.ResponseWriter, r *http.Request) {
 }
 
 func (uc *UserController) CreateUser(w http.ResponseWriter, r *http.Request) {
+	handleUserRequest(w, r, uc.userService.CreateUser, "Create User")
+}
+
+func (uc *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	handleUserRequest(w, r, uc.userService.UpdateUser, "Update User")
+}
+
+func handleUserRequest(w http.ResponseWriter, r *http.Request, userFunc func(*proto.User) (*proto.User, error), operation string) {
+	common.MyLogger.Println(color.YellowString("UC %s", operation))
+
 	w.Header().Set("Content-Type", "application/json")
-	common.MyLogger.Println(color.YellowString("UC Create User"))
 
 	var user models.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 
 	if err != nil {
-		common.MyLogger.Println(color.RedString(err.Error()))
-
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		handleError(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	// err = validator.New().Struct(user)
-
 	validate := validator.New()
 	validate.RegisterValidation("strength", validatePasswordStrength)
-	validate.RegisterValidation("validateRole", validateRole)
+	validate.RegisterValidation("validateRole", validateRole(models.ValidRoles))
 	err = validate.Struct(user)
 
 	if err != nil {
-		var validationErrors = make(map[string]string)
-		for _, err := range err.(validator.ValidationErrors) {
-			validationErrors[getJSONTag(err)] = getValidationErrorMsg(err)
-			// fmt.Sprintf("%s is %s", getJSONTag(err), err.Tag())
-			// fmt.Sprintf("%s", err.Tag())
-		}
-
-		errorResponse := ErrorResponse{Message: "Validation failed", Details: validationErrors}
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(errorResponse)
+		handleValidationErrors(w, err)
 		return
 	}
 
 	newUser := mapUserToProto(user)
 
-	createdUser, err := uc.userService.CreateUser(newUser)
+	createdUser, err := userFunc(newUser)
 	if err != nil {
-		common.MyLogger.Println(color.RedString(err.Error()))
-
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		handleError(w, err, http.StatusInternalServerError)
 		return
 	}
 
 	json.NewEncoder(w).Encode(createdUser)
+}
 
+func handleError(w http.ResponseWriter, err error, status int) {
+	common.MyLogger.Println(color.RedString(err.Error()))
+	http.Error(w, err.Error(), status)
+}
+
+func handleValidationErrors(w http.ResponseWriter, err error) {
+	var validationErrors = make(map[string]string)
+	for _, err := range err.(validator.ValidationErrors) {
+		validationErrors[getJSONTag(err)] = getValidationErrorMsg(err)
+	}
+
+	errorResponse := ErrorResponse{Message: "Validation failed", Details: validationErrors}
+
+	common.MyLogger.Println(color.RedString("ErrorResponse %v", errorResponse))
+
+	w.WriteHeader(http.StatusBadRequest)
+	json.NewEncoder(w).Encode(errorResponse)
 }
 
 func mapUserToProto(user models.User) *proto.User {
+	common.MyLogger.Println(color.CyanString("user map user to proto  %v", user))
+
 	return &proto.User{
-		// Id:        12,
+		Id:       user.Id,
 		Name:     user.Name,
 		Email:    user.Email,
 		Password: user.Password,
 		Role:     user.Role,
 		IsActive: user.IsActive,
-		// CreatedAt: "123",
-		// UpdatedAt: "456",
 	}
 }
 
@@ -147,19 +158,21 @@ func validatePasswordStrength(fl validator.FieldLevel) bool {
 	return len(password) >= 8
 }
 
-func validateRole(fl validator.FieldLevel) bool {
-	role := fl.Field().String()
-	for _, validRole := range models.ValidRoles {
-		if validRole == role {
-			return true
+func validateRole(roles []string) validator.Func {
+	return func(fl validator.FieldLevel) bool {
+		role := fl.Field().String()
+		for _, validRole := range roles {
+			if validRole == role {
+				return true
+			}
 		}
+
+		return false
 	}
 
-	return false
 }
 
 func getValidationErrorMsg(err validator.FieldError) string {
-	log.Println(err.Tag(), err.Field())
 	switch err.Tag() {
 	case "required":
 		return fmt.Sprintf("%s is required", err.Field())

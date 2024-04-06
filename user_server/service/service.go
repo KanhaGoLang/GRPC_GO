@@ -4,9 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"time"
 
+	"github.com/KanhaGoLang/go_common/common"
 	proto "github.com/KanhaGoLang/grpc_go/proto"
 	"github.com/fatih/color"
 )
@@ -19,14 +19,8 @@ func NewUserService(db *sql.DB) *UserService {
 	return &UserService{db: db}
 }
 
-func myLogger() *log.Logger {
-	logger := log.New(color.Output, "", 0)
-
-	return logger
-}
-
 func (s *UserService) CreateUser(ctx context.Context, user *proto.User) (*proto.User, error) {
-	myLogger().Println(color.GreenString("USER-SERVICE create User %v", user))
+	common.MyLogger.Println(color.GreenString("USER-SERVICE create User %v", user))
 
 	query := "INSERT INTO users (name, email, password, role, is_active) VALUES (?, ?, ?, ?, ?)"
 
@@ -45,7 +39,9 @@ func (s *UserService) CreateUser(ctx context.Context, user *proto.User) (*proto.
 }
 
 func (s *UserService) ReadUser(ctx context.Context, req *proto.UserId) (*proto.User, error) {
-	myLogger().Println(color.GreenString("USER-SERVICE get user by Id"))
+	if req.Id > 0 {
+		common.MyLogger.Println(color.GreenString("USER-SERVICE get user by Id %v", req.Id))
+	}
 
 	if req == nil || req.Id < 0 {
 		return nil, fmt.Errorf("invalid id %v", req.Id)
@@ -61,7 +57,7 @@ func (s *UserService) ReadUser(ctx context.Context, req *proto.UserId) (*proto.U
 
 	err := row.Scan(&user.Id, &user.Name, &user.Email, &user.Password, &user.Role, &user.IsActive, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
-		myLogger().Println(color.RedString("error reading from database : %s", err))
+		common.MyLogger.Println(color.RedString("error reading from database : %s", err))
 		return nil, err
 	}
 
@@ -70,7 +66,7 @@ func (s *UserService) ReadUser(ctx context.Context, req *proto.UserId) (*proto.U
 }
 
 func (us *UserService) UpdateUser(ctx context.Context, req *proto.User) (*proto.User, error) {
-	fmt.Println("US Update user")
+	common.MyLogger.Println(color.GreenString("USER-SERVICE update User %v", req))
 
 	if req == nil || req.Id <= 0 {
 		return nil, fmt.Errorf("invalid payload")
@@ -101,7 +97,7 @@ func (us *UserService) UpdateUser(ctx context.Context, req *proto.User) (*proto.
 }
 
 func (us *UserService) GetAllUsers(ctx context.Context, req *proto.NoParameter) (*proto.Users, error) {
-	log.Println("USER Service Get All Users")
+	common.MyLogger.Println(color.GreenString("USER-SERVICE get all Users"))
 
 	rows, err := us.db.QueryContext(ctx, "SELECT * FROM users ORDER BY id DESC")
 	if err != nil {
@@ -125,6 +121,8 @@ func (us *UserService) GetAllUsers(ctx context.Context, req *proto.NoParameter) 
 }
 
 func (us *UserService) DeleteUser(ctx context.Context, req *proto.UserId) (*proto.UserSuccess, error) {
+	common.MyLogger.Println(color.GreenString("USER-SERVICE delete user by Id %d", req.Id))
+
 	query := "DELETE FROM users WHERE id = ?"
 
 	_, err := us.db.ExecContext(ctx, query, req.Id)

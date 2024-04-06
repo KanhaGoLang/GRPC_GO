@@ -12,19 +12,26 @@ import (
 	"google.golang.org/grpc"
 )
 
+const (
+	userGrpcServiceAddress = "localhost:50052"
+)
+
 func main() {
 	port := ":1414"
 	router := mux.NewRouter()
 
-	initUserRoutes(router, "localhost:50052")
+	initUserRoutes(router)
 
 	common.MyLogger.Println(color.GreenString("Server started on port %s", port))
 	log.Fatal(http.ListenAndServe(port, router))
 }
 
-func initUserRoutes(router *mux.Router, grpcAddress string) {
+func initUserRoutes(router *mux.Router) {
+	common.MyLogger.Println(color.MagentaString("Init User Routes"))
+	common.MyLogger.Println(color.MagentaString("Establishing connection to User GRPC service on port %s", userGrpcServiceAddress))
+
 	// Initialize gRPC client
-	userGrpcConn, err := grpc.Dial(grpcAddress, grpc.WithInsecure())
+	userGrpcConn, err := grpc.Dial(userGrpcServiceAddress, grpc.WithInsecure())
 	if err != nil {
 		common.MyLogger.Fatalf(color.RedString("failed to dial grpc service: %v", err))
 	}
@@ -38,4 +45,5 @@ func initUserRoutes(router *mux.Router, grpcAddress string) {
 	router.HandleFunc("/users", userController.GetUsers).Methods("GET")
 	router.HandleFunc("/user/{id}", userController.GetUserById).Methods("GET")
 	router.HandleFunc("/user", userController.CreateUser).Methods("POST")
+	router.HandleFunc("/user", userController.UpdateUser).Methods("PUT")
 }

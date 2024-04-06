@@ -1,16 +1,20 @@
 package main
 
 import (
-	"fmt"
 	"net"
 
 	"github.com/KanhaGoLang/go_common/common"
 	"github.com/KanhaGoLang/grpc_go/post_server/controller"
 	"github.com/KanhaGoLang/grpc_go/post_server/service"
 	post "github.com/KanhaGoLang/grpc_go/proto"
+	"github.com/fatih/color"
 	"google.golang.org/grpc"
 
 	_ "github.com/go-sql-driver/mysql"
+)
+
+const (
+	postGrpcServiceAddress = "localhost:50053"
 )
 
 func main() {
@@ -18,14 +22,14 @@ func main() {
 	// Initialize database connection
 	db, err := common.NewDatabaseConnection()
 	if err != nil {
-		fmt.Println("Error connecting to the database:", err)
+		common.MyLogger.Println(color.RedString("Error connecting to the database: %v", err))
 		return
 	} else {
-		fmt.Println("Connected to Database")
+		common.MyLogger.Println(color.GreenString("Connected to Database"))
 	}
 	defer db.Close()
 
-	listener, tcpErr := net.Listen("tcp", "localhost:50053")
+	listener, tcpErr := net.Listen("tcp", postGrpcServiceAddress)
 
 	if tcpErr != nil {
 		panic(tcpErr)
@@ -38,7 +42,7 @@ func main() {
 
 	post.RegisterPostServiceServer(grpcServer, &controller.PostController{PostService: postService})
 
-	fmt.Println("Starting server")
+	common.MyLogger.Println(color.GreenString("POST GRPC Service running on %s", postGrpcServiceAddress))
 
 	if e := grpcServer.Serve(listener); e != nil {
 		panic(e)
