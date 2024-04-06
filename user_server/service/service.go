@@ -103,7 +103,7 @@ func (us *UserService) UpdateUser(ctx context.Context, req *proto.User) (*proto.
 func (us *UserService) GetAllUsers(ctx context.Context, req *proto.NoParameter) (*proto.Users, error) {
 	log.Println("USER Service Get All Users")
 
-	rows, err := us.db.QueryContext(ctx, "SELECT * FROM users")
+	rows, err := us.db.QueryContext(ctx, "SELECT * FROM users ORDER BY id DESC")
 	if err != nil {
 		return nil, err
 	}
