@@ -2,9 +2,10 @@ package service
 
 import (
 	"context"
-	"errors"
 
+	"github.com/KanhaGoLang/go_common/common"
 	"github.com/KanhaGoLang/grpc_go/proto"
+	"github.com/fatih/color"
 	"google.golang.org/grpc"
 )
 
@@ -24,15 +25,19 @@ func NewUserServiceClient(grpcConn *grpc.ClientConn) UserService {
 }
 
 func (us *userGrpcServiceClient) GetUsers() (*proto.Users, error) {
+	common.MyLogger.Println(color.MagentaString("USER-SERVICE get all Users"))
+
 	users, err := us.grpcClient.GetAllUsers(context.Background(), &proto.NoParameter{})
 	if err != nil {
-		return nil, errors.New("unable to get user")
+		return nil, err
 	}
 	return users, nil
 
 }
 
 func (us *userGrpcServiceClient) GetUser(id int32) (*proto.User, error) {
+	common.MyLogger.Println(color.MagentaString("USER-SERVICE get user by userID %d", id))
+
 	user, err := us.grpcClient.ReadUserById(context.Background(), &proto.UserId{Id: id})
 	if err != nil {
 		return nil, err

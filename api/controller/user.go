@@ -2,7 +2,6 @@ package controller
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -23,11 +22,12 @@ func NewUserController(userService service.UserService) *UserController {
 }
 
 func (uc *UserController) GetUsers(w http.ResponseWriter, r *http.Request) {
-	log.Println("API USER get all users")
+	common.MyLogger.Println(color.YellowString("UC get all users"))
 
 	users, err := uc.userService.GetUsers()
-	log.Println("error >>> ", err)
 	if err != nil {
+		common.MyLogger.Println(color.RedString(err.Error()))
+
 		http.Error(w, "error getting users", http.StatusInternalServerError)
 		return
 	}
@@ -37,7 +37,6 @@ func (uc *UserController) GetUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (uc *UserController) GetUserById(w http.ResponseWriter, r *http.Request) {
-	common.MyLogger.Println(color.YellowString("UC Get user by id"))
 	vars := mux.Vars(r)
 	idStr := vars["id"]
 
@@ -46,10 +45,14 @@ func (uc *UserController) GetUserById(w http.ResponseWriter, r *http.Request) {
 	if err != nil || id <= 0 {
 		http.Error(w, "Invalid User id", http.StatusBadRequest)
 	}
+	idInt32 := int32(id)
+	common.MyLogger.Println(color.YellowString("UC Get user by id %d", idInt32))
 
-	user, err := uc.userService.GetUser(int32(id))
+	user, err := uc.userService.GetUser((idInt32))
 
 	if err != nil {
+		common.MyLogger.Println(color.RedString(err.Error()))
+
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
