@@ -13,6 +13,7 @@ import (
 type UserService interface {
 	GetUsers() (*proto.Users, error)
 	GetUser(id int32) (*proto.User, error)
+	CreateUser(user *proto.User) (*proto.User, error)
 }
 
 type userGrpcServiceClient struct {
@@ -43,4 +44,15 @@ func (us *userGrpcServiceClient) GetUser(id int32) (*proto.User, error) {
 		return nil, err
 	}
 	return user, nil
+}
+
+func (us *userGrpcServiceClient) CreateUser(user *proto.User) (*proto.User, error) {
+	common.MyLogger.Println(color.MagentaString("USER-SERVICE create User %v", user))
+
+	newUser, err := us.grpcClient.CreateUser(context.Background(), &proto.User{Name: user.Name, Email: user.Email, Password: user.Password, Role: user.Role, IsActive: user.IsActive})
+
+	if err != nil {
+		return nil, err
+	}
+	return newUser, nil
 }

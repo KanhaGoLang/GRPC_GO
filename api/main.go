@@ -37,4 +37,5 @@ func initUserRoutes(router *mux.Router, grpcAddress string) {
 
 	router.HandleFunc("/users", userController.GetUsers).Methods("GET")
 	router.HandleFunc("/user/{id}", userController.GetUserById).Methods("GET")
+	router.HandleFunc("/user", userController.CreateUser).Methods("POST")
 }

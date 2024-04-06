@@ -26,11 +26,11 @@ func myLogger() *log.Logger {
 }
 
 func (s *UserService) CreateUser(ctx context.Context, user *proto.User) (*proto.User, error) {
-	fmt.Println("Service create user")
+	myLogger().Println(color.GreenString("USER-SERVICE create User %v", user))
 
-	query := "INSERT INTO users (name, email, password, role, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+	query := "INSERT INTO users (name, email, password, role, is_active) VALUES (?, ?, ?, ?, ?)"
 
-	result, err := s.db.ExecContext(ctx, query, user.Name, user.Email, user.Password, user.Role, user.IsActive, user.CreatedAt, user.UpdatedAt)
+	result, err := s.db.ExecContext(ctx, query, user.Name, user.Email, user.Password, user.Role, user.IsActive)
 	if err != nil {
 		return nil, err
 	}
