@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	accessTokenExpirationTime = time.Minute * 30
+	accessTokenExpirationTime = time.Hour * 24
 	secretKey                 = "JWT_SECRET_KEY"
 )
 
@@ -106,6 +106,17 @@ func (s *UserService) ReadUser(ctx context.Context, req *proto.UserId) (*proto.U
 
 func (us *UserService) UpdateUser(ctx context.Context, req *proto.User) (*proto.User, error) {
 	common.MyLogger.Println(color.GreenString("USER-SERVICE update User %v", req))
+	common.MyLogger.Println(color.GreenString("USER-SERVICE get user by Id to verify user id %d", req.Id))
+
+	dbUser, err := us.ReadUser(ctx, &proto.UserId{Id: req.Id})
+	if err != nil {
+		return nil, err
+	}
+
+	if dbUser == nil {
+		return nil, fmt.Errorf("invalid id %v (no used found with id )", req.Id)
+	}
+
 	common.MyLogger.Println(color.YellowString("USER-SERVICE checking if User Email already exists %s", req.Email))
 
 	existingUserIDWIthEmail, err := us.getUserIDByEmail(req.Email)
@@ -176,9 +187,16 @@ func (us *UserService) GetAllUsers(ctx context.Context, req *proto.NoParameter) 
 func (us *UserService) DeleteUser(ctx context.Context, req *proto.UserId) (*proto.UserSuccess, error) {
 	common.MyLogger.Println(color.GreenString("USER-SERVICE delete user by Id %d", req.Id))
 
+	common.MyLogger.Println(color.GreenString("USER-SERVICE get user by Id to verify user id %d", req.Id))
+
+	_, err := us.ReadUser(ctx, &proto.UserId{Id: req.Id})
+	if err != nil {
+		return nil, err
+	}
+
 	query := "DELETE FROM users WHERE id = ?"
 
-	_, err := us.db.ExecContext(ctx, query, req.Id)
+	_, err = us.db.ExecContext(ctx, query, req.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -200,6 +218,10 @@ func (us *UserService) AuthUser(ctx context.Context, req *proto.AuthRequest) (*p
 	if err != nil {
 		common.MyLogger.Println(color.RedString("error reading from database : %s", err))
 		return nil, err
+	}
+
+	if !user.IsActive {
+		return nil, errors.New("user is not active")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)) // check password

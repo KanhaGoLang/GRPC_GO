@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"net/http"
+
 	"github.com/KanhaGoLang/go_common/common"
 	"github.com/KanhaGoLang/grpc_go/api/controller"
 	"github.com/KanhaGoLang/grpc_go/api/service"
@@ -24,6 +26,14 @@ func InitUserRoutes(router *mux.Router) {
 
 	// Create user controller with userService instance
 	userController := controller.NewUserController(userService)
+
+	// Middleware to set Content-Type to application/json for all routes
+	router.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			next.ServeHTTP(w, r)
+		})
+	})
 
 	router.HandleFunc("/users", userController.GetUsers).Methods("GET")
 	router.HandleFunc("/user/{id}", userController.GetUserById).Methods("GET")
