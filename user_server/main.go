@@ -47,7 +47,12 @@ func main() {
 		panic(tcpErr)
 	}
 
-	grpcServer := grpc.NewServer()
+	// adding grpc option to validate JWT token aby adding an Auth Interceptor
+	grpcOpts := []grpc.ServerOption{
+		grpc.UnaryInterceptor(service.AuthInterceptor),
+	}
+
+	grpcServer := grpc.NewServer(grpcOpts...)
 	proto.RegisterUserServiceServer(grpcServer, &controller.UserController{UserService: userService, PostServiceClient: postClient})
 
 	common.MyLogger.Println(color.BlueString("UserServer started on port %s", common.UserServiceAddress))

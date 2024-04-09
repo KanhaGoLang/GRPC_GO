@@ -26,6 +26,7 @@ const (
 	UserService_GetAllUsers_FullMethodName       = "/grpcService.UserService/GetAllUsers"
 	UserService_GetUserPosts_FullMethodName      = "/grpcService.UserService/GetUserPosts"
 	UserService_SaveMultipleUsers_FullMethodName = "/grpcService.UserService/SaveMultipleUsers"
+	UserService_AuthUser_FullMethodName          = "/grpcService.UserService/AuthUser"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -40,6 +41,8 @@ type UserServiceClient interface {
 	GetUserPosts(ctx context.Context, in *UserId, opts ...grpc.CallOption) (*Posts, error)
 	// New client streaming RPC for saving multiple users
 	SaveMultipleUsers(ctx context.Context, opts ...grpc.CallOption) (UserService_SaveMultipleUsersClient, error)
+	// auth user
+	AuthUser(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*TokenResponse, error)
 }
 
 type userServiceClient struct {
@@ -138,6 +141,15 @@ func (x *userServiceSaveMultipleUsersClient) CloseAndRecv() (*UserSuccess, error
 	return m, nil
 }
 
+func (c *userServiceClient) AuthUser(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*TokenResponse, error) {
+	out := new(TokenResponse)
+	err := c.cc.Invoke(ctx, UserService_AuthUser_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
@@ -150,6 +162,8 @@ type UserServiceServer interface {
 	GetUserPosts(context.Context, *UserId) (*Posts, error)
 	// New client streaming RPC for saving multiple users
 	SaveMultipleUsers(UserService_SaveMultipleUsersServer) error
+	// auth user
+	AuthUser(context.Context, *AuthRequest) (*TokenResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -177,6 +191,9 @@ func (UnimplementedUserServiceServer) GetUserPosts(context.Context, *UserId) (*P
 }
 func (UnimplementedUserServiceServer) SaveMultipleUsers(UserService_SaveMultipleUsersServer) error {
 	return status.Errorf(codes.Unimplemented, "method SaveMultipleUsers not implemented")
+}
+func (UnimplementedUserServiceServer) AuthUser(context.Context, *AuthRequest) (*TokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AuthUser not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 
@@ -325,6 +342,24 @@ func (x *userServiceSaveMultipleUsersServer) Recv() (*User, error) {
 	return m, nil
 }
 
+func _UserService_AuthUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).AuthUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_AuthUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).AuthUser(ctx, req.(*AuthRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -355,6 +390,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUserPosts",
 			Handler:    _UserService_GetUserPosts_Handler,
+		},
+		{
+			MethodName: "AuthUser",
+			Handler:    _UserService_AuthUser_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
