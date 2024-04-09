@@ -5,12 +5,23 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/KanhaGoLang/go_common/common"
 	proto "github.com/KanhaGoLang/grpc_go/proto"
 	"github.com/fatih/color"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+)
+
+const (
+	accessTokenExpirationTime = time.Hour * 24
+	secretKey                 = "JWT_SECRET_KEY"
 )
 
 type UserService struct {
@@ -95,6 +106,17 @@ func (s *UserService) ReadUser(ctx context.Context, req *proto.UserId) (*proto.U
 
 func (us *UserService) UpdateUser(ctx context.Context, req *proto.User) (*proto.User, error) {
 	common.MyLogger.Println(color.GreenString("USER-SERVICE update User %v", req))
+	common.MyLogger.Println(color.GreenString("USER-SERVICE get user by Id to verify user id %d", req.Id))
+
+	dbUser, err := us.ReadUser(ctx, &proto.UserId{Id: req.Id})
+	if err != nil {
+		return nil, err
+	}
+
+	if dbUser == nil {
+		return nil, fmt.Errorf("invalid id %v (no used found with id )", req.Id)
+	}
+
 	common.MyLogger.Println(color.YellowString("USER-SERVICE checking if User Email already exists %s", req.Email))
 
 	existingUserIDWIthEmail, err := us.getUserIDByEmail(req.Email)
@@ -165,12 +187,129 @@ func (us *UserService) GetAllUsers(ctx context.Context, req *proto.NoParameter) 
 func (us *UserService) DeleteUser(ctx context.Context, req *proto.UserId) (*proto.UserSuccess, error) {
 	common.MyLogger.Println(color.GreenString("USER-SERVICE delete user by Id %d", req.Id))
 
+	common.MyLogger.Println(color.GreenString("USER-SERVICE get user by Id to verify user id %d", req.Id))
+
+	_, err := us.ReadUser(ctx, &proto.UserId{Id: req.Id})
+	if err != nil {
+		return nil, err
+	}
+
 	query := "DELETE FROM users WHERE id = ?"
 
-	_, err := us.db.ExecContext(ctx, query, req.Id)
+	_, err = us.db.ExecContext(ctx, query, req.Id)
 	if err != nil {
 		return nil, err
 	}
 
 	return &proto.UserSuccess{IsSuccess: true}, nil
+}
+
+func (us *UserService) AuthUser(ctx context.Context, req *proto.AuthRequest) (*proto.TokenResponse, error) {
+	common.MyLogger.Println(color.GreenString("USER-SERVICE Authenticate user  with email %s", req.Email))
+
+	query := "SELECT * FROM users WHERE LOWER(email) = ?"
+
+	row := us.db.QueryRowContext(ctx, query, strings.ToLower(req.Email)) // to lower
+
+	var user proto.User
+
+	err := row.Scan(&user.Id, &user.Name, &user.Email, &user.Password, &user.Role, &user.IsActive, &user.CreatedAt, &user.UpdatedAt)
+
+	if err != nil {
+		common.MyLogger.Println(color.RedString("error reading from database : %s", err))
+		return nil, err
+	}
+
+	if !user.IsActive {
+		return nil, errors.New("user is not active")
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)) // check password
+	if err != nil {
+		return nil, err
+	}
+
+	accessToken, err := us.generateToken(user.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &proto.TokenResponse{Token: accessToken}, nil
+}
+
+func (us *UserService) generateToken(id int32) (string, error) {
+	accessTokenClaims := jwt.MapClaims{
+		"userId": id,
+		"exp":    time.Now().Add(accessTokenExpirationTime).Unix(),
+	}
+
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessTokenClaims)
+	accessTokenString, err := accessToken.SignedString([]byte(secretKey))
+	if err != nil {
+		return "", err
+	}
+
+	return accessTokenString, nil
+}
+
+// Middleware to authenticate JWT token for all services except AuthUser
+func AuthInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	// Extract the method name from the gRPC metadata
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.Unauthenticated, "metadata is not provided")
+	}
+
+	// Get the method name
+	method := info.FullMethod
+	common.MyLogger.Println(color.MagentaString("gRPC method: %s", method))
+
+	// Skip token verification for AuthUser service
+	if method == "/grpcService.UserService/AuthUser" {
+		return handler(ctx, req)
+	}
+
+	// Extract the JWT token from the metadata
+	tokenString := md.Get("authorization")
+	common.MyLogger.Println(color.YellowString("passed Token: %s", tokenString))
+
+	if len(tokenString) == 0 {
+		return nil, status.Errorf(codes.Unauthenticated, "token is not provided")
+	}
+
+	// Parse and validate the JWT token
+	token, err := jwt.Parse(tokenString[0], func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(secretKey), nil
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, "invalid token: %v", err)
+	}
+
+	if !token.Valid {
+		return nil, status.Error(codes.Unauthenticated, "token is invalid")
+	}
+
+	// Print the claims if the token is valid
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "invalid token claims")
+	}
+	common.MyLogger.Println(color.GreenString("JWT Claims: %+v", claims))
+
+	// Extract the userId claim from the claims map
+	userIDClaim, ok := claims["userId"].(float64) // Assuming userId is of type float64 in the JWT payload
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "invalid userId claim")
+	}
+
+	// Convert the userId to the desired type (e.g., int)
+	userID := int32(userIDClaim)
+
+	common.MyLogger.Println(color.GreenString("USER_ID from JWT Token: %d", userID))
+
+	// Token is valid, proceed with the request
+	return handler(ctx, req)
 }

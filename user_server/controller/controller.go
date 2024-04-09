@@ -60,6 +60,12 @@ func (uc *UserController) DeleteUser(ctx context.Context, req *proto.UserId) (*p
 	return uc.UserService.DeleteUser(ctx, req)
 }
 
+func (uc *UserController) AuthUser(ctx context.Context, req *proto.AuthRequest) (*proto.TokenResponse, error) {
+	common.MyLogger.Println(color.YellowString("UC Authenticate user %s", req.Email))
+
+	return uc.UserService.AuthUser(ctx, req)
+}
+
 func (uc *UserController) SaveMultipleUsers(stream proto.UserService_SaveMultipleUsersServer) error {
 
 	var users []*proto.User

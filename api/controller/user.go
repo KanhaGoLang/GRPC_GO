@@ -1,9 +1,12 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/KanhaGoLang/grpc_go/api/models"
 	"github.com/KanhaGoLang/grpc_go/api/service"
@@ -11,6 +14,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/KanhaGoLang/go_common/common"
 )
@@ -24,22 +28,57 @@ func NewUserController(userService service.UserService) *UserController {
 	return &UserController{userService: userService}
 }
 
+func (uc *UserController) GetContextWithAuthorization(header http.Header) (context.Context, error) {
+	tokenString := header.Get("Authorization")
+
+	common.MyLogger.Println(color.CyanString("GetContextWithAuthorization %v", tokenString))
+
+	if len(tokenString) == 0 {
+		return nil, errors.New("no token passed")
+	}
+	token := strings.Split(tokenString, " ")[1]
+	ctx := metadata.AppendToOutgoingContext(context.Background(), "authorization", token)
+
+	return ctx, nil
+
+}
+
+func (uc *UserController) HandleError(w http.ResponseWriter, err error) {
+	common.MyLogger.Println(color.RedString(err.Error()))
+
+	http.Error(w, err.Error(), http.StatusInternalServerError)
+
+}
+
 func (uc *UserController) GetUsers(w http.ResponseWriter, r *http.Request) {
 	common.MyLogger.Println(color.YellowString("UC get all users"))
 
-	users, err := uc.userService.GetUsers()
+	ctx, err := uc.GetContextWithAuthorization(r.Header)
 	if err != nil {
-		common.MyLogger.Println(color.RedString(err.Error()))
+		uc.HandleError(w, err)
 
-		http.Error(w, "error getting users", http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	users, err := uc.userService.GetUsers(ctx)
+
+	if err != nil {
+		uc.HandleError(w, err)
+
+		return
+	}
+
 	json.NewEncoder(w).Encode(users)
 }
 
 func (uc *UserController) GetUserById(w http.ResponseWriter, r *http.Request) {
+	ctx, err := uc.GetContextWithAuthorization(r.Header)
+	if err != nil {
+		uc.HandleError(w, err)
+
+		return
+	}
+
 	vars := mux.Vars(r)
 	idStr := vars["id"]
 
@@ -47,11 +86,13 @@ func (uc *UserController) GetUserById(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(idStr, 10, 32)
 	if err != nil || id <= 0 {
 		http.Error(w, "Invalid User id", http.StatusBadRequest)
+
+		return
 	}
 	idInt32 := int32(id)
 	common.MyLogger.Println(color.YellowString("UC Get user by id %d", idInt32))
 
-	user, err := uc.userService.GetUser((idInt32))
+	user, err := uc.userService.GetUser(ctx, idInt32)
 
 	if err != nil {
 		common.MyLogger.Println(color.RedString(err.Error()))
@@ -66,14 +107,35 @@ func (uc *UserController) GetUserById(w http.ResponseWriter, r *http.Request) {
 }
 
 func (uc *UserController) CreateUser(w http.ResponseWriter, r *http.Request) {
-	handleUserRequest(w, r, uc.userService.CreateUser, "Create User")
+	ctx, err := uc.GetContextWithAuthorization(r.Header)
+	if err != nil {
+		uc.HandleError(w, err)
+
+		return
+	}
+
+	handleUserRequest(w, r, uc.userService.CreateUser, ctx, "Create User")
 }
 
 func (uc *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	handleUserRequest(w, r, uc.userService.UpdateUser, "Update User")
+	ctx, err := uc.GetContextWithAuthorization(r.Header)
+	if err != nil {
+		uc.HandleError(w, err)
+
+		return
+	}
+	handleUserRequest(w, r, uc.userService.UpdateUser, ctx, "Update User")
 }
 
 func (uc *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
+
+	ctx, err := uc.GetContextWithAuthorization(r.Header)
+	if err != nil {
+		uc.HandleError(w, err)
+
+		return
+	}
+
 	vars := mux.Vars(r)
 	idStr := vars["id"]
 
@@ -81,12 +143,14 @@ func (uc *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(idStr, 10, 32)
 	if err != nil || id <= 0 {
 		http.Error(w, "Invalid User id", http.StatusBadRequest)
+
+		return
 	}
 
 	idInt32 := int32(id)
 	common.MyLogger.Println(color.YellowString("UC Delete User having id %d", idInt32))
 
-	result, err := uc.userService.Delete((idInt32))
+	result, err := uc.userService.Delete(ctx, (idInt32))
 
 	if err != nil {
 		common.MyLogger.Println(color.RedString(err.Error()))
@@ -100,7 +164,7 @@ func (uc *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func handleUserRequest(w http.ResponseWriter, r *http.Request, userFunc func(*proto.User) (*proto.User, error), operation string) {
+func handleUserRequest(w http.ResponseWriter, r *http.Request, userFunc func(context.Context, *proto.User) (*proto.User, error), ctx context.Context, operation string) {
 	common.MyLogger.Println(color.YellowString("UC %s", operation))
 
 	w.Header().Set("Content-Type", "application/json")
@@ -126,7 +190,7 @@ func handleUserRequest(w http.ResponseWriter, r *http.Request, userFunc func(*pr
 
 	newUser := mapUserToProto(user)
 
-	createdUser, err := userFunc(newUser)
+	createdUser, err := userFunc(ctx, newUser)
 	if err != nil {
 		common.HandleError(w, err, http.StatusInternalServerError)
 		return
