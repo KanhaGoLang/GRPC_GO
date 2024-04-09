@@ -1,7 +1,7 @@
 filippo.io/edwards25519 v1.1.0 h1:FNf4tywRC1HmFuKW5xopWpigGjJKiJSV0Cqo0cJWDaA=
 filippo.io/edwards25519 v1.1.0/go.mod h1:BxyFTGdWcka3PhytdK4V28tE5sGfRvvvRV7EaN4VDT4=
-github.com/KanhaGoLang/go_common v1.0.4 h1:Te5I403w3ljW5J7jD/y/yqyWRHuDidE0tut7DIOw9N0=
-github.com/KanhaGoLang/go_common v1.0.4/go.mod h1:5kkdRAiGdbJNks8YX2+y/Pc56vr10IF4ZPnPOQzGhkw=
+github.com/KanhaGoLang/go_common v1.0.5 h1:Wz6sQSRtqyVf/xJqDW0lGvb/BOiob+lrU62F3RRHz84=
+github.com/KanhaGoLang/go_common v1.0.5/go.mod h1:5kkdRAiGdbJNks8YX2+y/Pc56vr10IF4ZPnPOQzGhkw=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/fatih/color v1.16.0 h1:zmkK9Ngbjj+K0yRhTVONQh1p/HknKYSlNT+vZCzyokM=
 github.com/fatih/color v1.16.0/go.mod h1:fL2Sau1YI5c0pdGEVCbKQbLXB6edEj1ZgiY4NijnWvE=
